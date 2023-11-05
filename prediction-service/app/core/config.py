@@ -11,5 +11,5 @@ class Config(BaseSettings):
 settings = Config()
 
 app_configs: dict[str, Any] = {"title": "Predictions API"}
-app_configs["openapi_url"] = f"api/v{settings.APP_VERSION}/predictions/openapi.json"
-app_configs["docs_url"] = f"api/v{settings.APP_VERSION}/predictions/docs"
+app_configs["openapi_url"] = f"/api/v{settings.APP_VERSION}/predictions/openapi.json"
+app_configs["docs_url"] = f"/api/v{settings.APP_VERSION}/predictions/docs"
