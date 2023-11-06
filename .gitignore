@@ -138,6 +138,8 @@ venv.bak/
 # mkdocs documentation
 /site
 
+model_store/
+
 # Ignore log files and directories
 logs/
 *.log
