@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
-import time
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from loguru import logger
+from app.api.exception_handlers import entity_not_found_exception_handler, input_required_exception_handler, validation_exception_handler
+from app.domain.exceptions.domain_exceptions import EntityNotFoundException, InputRequiredException
+from app.middleware.exception_handling import ExceptionHandlingMiddleware
 from app.middleware.request_logging import log_requests
 from app.core.logger_config import setup_logging
 from app.api.routes.predictions import predictions
@@ -24,6 +26,13 @@ def create_application() -> FastAPI:
                                allow_methods=["GET", "POST", "PUT",
                                               "PATCH", "DELETE", "OPTIONS"],
                                allow_headers=settings.CORS_HEADERS)
+    application.add_middleware(ExceptionHandlingMiddleware)
+    application.add_exception_handler(
+        EntityNotFoundException, entity_not_found_exception_handler)
+    application.add_exception_handler(
+        RequestValidationError, validation_exception_handler)
+    application.add_exception_handler(
+        InputRequiredException, input_required_exception_handler)
     application.include_router(predictions)
     return application
 

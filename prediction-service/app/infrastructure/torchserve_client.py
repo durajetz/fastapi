@@ -1,8 +1,7 @@
-from fastapi import HTTPException
 import httpx
+from httpx import Response
 from loguru import logger
-
-from app.schemas.torchserve import TorchServeResponse
+from app.domain.exceptions.domain_exceptions import EntityNotFoundException, ServerException
 
 
 class TorchServeClient:
@@ -17,7 +16,7 @@ class TorchServeClient:
     def client(self):
         return httpx.AsyncClient(base_url=self.host, timeout=30.0)
 
-    async def make_prediction(self, prediction_model: str, data):
+    async def make_prediction(self, prediction_model: str, data) -> Response:
         logger.info(
             f"Prediction start for model {prediction_model}.")
         async with self.client as client:
@@ -34,9 +33,17 @@ class TorchServeClient:
                 logger.info(
                     f"Prediction made successfully for model {prediction_model}.")
                 return response
-            except (httpx.RequestError, httpx.HTTPStatusError) as e:
+            except httpx.HTTPStatusError as e:
                 logger.error(
-                    f"An error occurred while making a prediction: {str(e)}")
-                # logger.exception(e)
-                raise HTTPException(
-                    status_code=500, detail="Internal server error occurred while making a prediction.")
+                    f"HTTP error occurred while making a prediction: {str(e)}")
+                if e.response.status_code == 404:
+                    raise EntityNotFoundException(
+                        detail="Model not found for prediction.")
+                else:
+                    raise ServerException(status_code=e.response.status_code,
+                                          detail="Server error occurred while making a prediction.")
+            except httpx.RequestError as e:
+                logger.error(
+                    f"Request error occurred while making a prediction: {str(e)}")
+                raise ServerException(
+                    detail="Internal server error occurred while making a prediction.")

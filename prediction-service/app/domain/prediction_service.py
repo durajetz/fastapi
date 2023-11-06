@@ -1,5 +1,9 @@
 import json
 
+from loguru import logger
+
+
+from app.domain.exceptions.domain_exceptions import ServerException
 from app.core.message_queue import MessageQueue
 from app.infrastructure.torchserve_client import TorchServeClient
 from app.schemas.prediction import PredictionRequest, PredictionResponse
@@ -19,7 +23,7 @@ class PredictionService:
         # Direct call to TorchServe for now
         response = await self.torchserve_client.make_prediction(request.prediction_model_name, request.data)
 
-        # Deserialize response and return
-        # Adjust the following line to correctly extract and deserialize your response
-        prediction_response = PredictionResponse.parse_raw(response.text)
-        return prediction_response
+        logger.info(
+            f"Prediction output for model {request.prediction_model_name}: {response.json()}")
+        return PredictionResponse(prediction_model_name=request.prediction_model_name,
+                                  results=response.json())

@@ -1,22 +1,46 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile
-from app.infrastructure.torchserve_client import TorchServeClient
-from app.api.dependencies import get_message_queue, get_prediction_service, get_torchserve_client
+from typing import Any, Dict, Union
+from fastapi import APIRouter, Depends
+from app.domain.exceptions.domain_exceptions import InputRequiredException
+from app.api.dependencies import get_prediction_service
 from app.domain.prediction_service import PredictionService
-from app.core.message_queue import MessageQueue
-from app.core.config import settings
 from app.schemas.prediction import PredictionRequest, PredictionResponse
 
 predictions = APIRouter(prefix="/api/v1/predictions", tags=["Predictions"])
 
+responses: Dict[Union[int, str], Dict[str, Any]] = {
+    200: {
+        "description": "Successful Response",
+        "model": PredictionResponse,
+    },
+    422: {
+        "description": "Validation Error",
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": "field '' required"
+                }
+            }
+        }
+    },
+    500: {
+        "description": "Internal Server Error",
+        "content": {
+            "application/json": {
+                "example": {"detail": "Internal server error occurred while making a prediction."},
+            }
+        }
+    },
+}
 
-@predictions.post('/make-prediction', response_model=PredictionResponse)
+
+@predictions.post('/make-prediction', response_model=PredictionResponse, responses=responses)
 async def make_prediction(
     prediction_request: PredictionRequest,
-    torchserve_client: TorchServeClient = Depends(get_torchserve_client),
-    mq: MessageQueue = Depends(get_message_queue) 
+    prediction_service: PredictionService = Depends(get_prediction_service)
 ):
     """
     Make incoming prediction requests to the requested model.
     """
-    prediction_service = PredictionService(mq, torchserve_client)
+    if not prediction_request.prediction_model_name:
+        raise InputRequiredException(field_name="prediction_model_name")
     return await prediction_service.make_prediction(prediction_request)
