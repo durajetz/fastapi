@@ -13,11 +13,11 @@ class ExceptionHandlingMiddleware(BaseHTTPMiddleware):
         except CustomBaseException as exc:
             return JSONResponse(
                 status_code=exc.status_code,
-                content={"detail": exc.detail},
+                content={"detail": exc.detail, "status_code": exc.status_code},
             )
         except Exception as exc:
 
             return JSONResponse(
                 status_code=500,
-                content={"detail": "Internal Server Error"},
+                content={"detail": "Internal Server Error", "status_code": 500},
             )

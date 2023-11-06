@@ -3,6 +3,7 @@ from typing import Optional
 from types import FrameType
 from loguru import logger
 
+
 class InterceptHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         try:
@@ -17,6 +18,8 @@ class InterceptHandler(logging.Handler):
             depth += 1
 
         if frame:
-            logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+            logger.opt(depth=depth, exception=record.exc_info).log(
+                level, record.getMessage())
         else:
-            logger.opt(exception=record.exc_info).log(level, record.getMessage())
+            logger.opt(exception=record.exc_info).log(
+                level, record.getMessage())

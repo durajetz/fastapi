@@ -8,7 +8,7 @@ services:
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
       - TORCHSERVE_HOST=http://host.docker.internal:8080
-    # command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+      - PREDICTION_TIMEOUT=60
     volumes:
       - ./prediction-service/:/app/
       - ./images/:/data

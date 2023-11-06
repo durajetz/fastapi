@@ -16,6 +16,10 @@ class Config(BaseSettings):
                                "http://localhost:8080"]
     CORS_ORIGINS_REGEX: str | None = "http://localhost*"
     CORS_HEADERS: list[str] = ["*"]
+    RATE_LIMITER_MAX_TOKENS: int = 10
+    RATE_LIMITER_REFILL_TIME: int = 1
+    PREDICTION_TIMEOUT: int = int(os.getenv('PREDICTION_TIMEOUT', '60'))
+
 
 
 settings = Config()

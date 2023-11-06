@@ -2,8 +2,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from app.api.exception_handlers import entity_not_found_exception_handler, input_required_exception_handler, validation_exception_handler
-from app.domain.exceptions.domain_exceptions import EntityNotFoundException, InputRequiredException
+from app.api.exception_handlers import entity_not_found_exception_handler, input_required_exception_handler, server_exception_handler, validation_exception_handler
+from app.domain.exceptions.domain_exceptions import EntityNotFoundException, InputRequiredException, ServerException
 from app.middleware.exception_handling import ExceptionHandlingMiddleware
 from app.middleware.request_logging import log_requests
 from app.core.logger_config import setup_logging
@@ -33,6 +33,8 @@ def create_application() -> FastAPI:
         RequestValidationError, validation_exception_handler)
     application.add_exception_handler(
         InputRequiredException, input_required_exception_handler)
+    application.add_exception_handler(
+        ServerException, server_exception_handler)
     application.include_router(predictions)
     return application
 
