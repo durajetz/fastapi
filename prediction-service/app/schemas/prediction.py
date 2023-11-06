@@ -1,10 +1,11 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Any
 
 
 class PredictionRequest(BaseModel):
-    name: str
+    prediction_model_name: str
+    data: Any
 
 
 class PredictionResponse(BaseModel):
-    id: int
+    id: int = 3

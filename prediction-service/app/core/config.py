@@ -1,11 +1,21 @@
+import os
 from typing import Any
 from pydantic_settings import BaseSettings
 
 
 class Config(BaseSettings):
     SITE_DOMAIN: str = "myapp.com"
-    TORCH_SERVE_URL: str = "http://localhost:8080/predictions/"
     APP_VERSION: str = "1"
+    TORCHSERVE_HOST: str = os.getenv('TORCHSERVE_HOST', 'localhost:8080')
+    RABBITMQ_HOST: str = os.getenv(
+        'RABBITMQ_URL', 'amqp://user:password@localhost:5672/')
+    INCOMING_QUEUE: str = 'prediction_requests'
+    RESULT_QUEUE: str = 'prediction_results'
+    LOG_LEVEL: str = 'INFO'
+    CORS_ORIGINS: list[str] = ["http://localhost",
+                               "http://localhost:8080"]
+    CORS_ORIGINS_REGEX: str | None = "http://localhost*"
+    CORS_HEADERS: list[str] = ["*"]
 
 
 settings = Config()

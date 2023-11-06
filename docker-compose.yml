@@ -5,8 +5,47 @@ services:
     build: 
       context: ./prediction-service
       dockerfile: Dockerfile
+    environment:
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
+      - TORCHSERVE_HOST=http://host.docker.internal:8080
     # command: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     volumes:
       - ./prediction-service/:/app/
+      - ./images/:/data
     ports:
       - 8002:8000
+    depends_on:
+      - rabbitmq
+    networks:
+      - my_network
+
+  rabbitmq:
+    image: "rabbitmq:3-management"
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - my_network
+
+  torchserve:
+    image: pytorch/torchserve:latest
+    ports:
+      - "8080:8080"  # Inference API
+      - "8081:8081"  # Management API
+    volumes:
+      - ./model_store:/home/model-server/model_store
+    environment:
+      - MODEL_STORE=/home/model-server/model_store
+    command:
+      - "torchserve"
+      - "--start"
+      - "--model-store"
+      - "/home/model-server/model_store"
+      - "--models"
+      - "fastrcnn=fastrcnn.mar"
+    networks:
+      - my_network
+
+networks:
+  my_network:
