@@ -1,4 +1,3 @@
-# domain/exceptions/base.py
 from fastapi import HTTPException, status
 
 class CustomBaseException(HTTPException):

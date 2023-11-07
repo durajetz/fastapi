@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .exception_handling import ExceptionHandlingMiddleware
 from .request_logging import RequestLoggingMiddleware
-from app.core.config import settings
+from ..core.config import settings
 
 
 def setup_middlewares(app: FastAPI):

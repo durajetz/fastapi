@@ -1,8 +1,7 @@
 from fastapi import Request
-from starlette.types import ASGIApp, Receive, Scope, Send
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
-from app.domain.exceptions.domain_exceptions import CustomBaseException
+from ..domain.exceptions.domain_exceptions import CustomBaseException
 
 
 class ExceptionHandlingMiddleware(BaseHTTPMiddleware):

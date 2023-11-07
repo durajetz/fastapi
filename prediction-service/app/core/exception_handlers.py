@@ -1,7 +1,7 @@
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from app.domain.exceptions.domain_exceptions import EntityNotFoundException, InputRequiredException, ServerException
+from ..domain.exceptions.domain_exceptions import EntityNotFoundException, InputRequiredException, ServerException
 
 
 def create_error_response(status_code: int, detail: str):

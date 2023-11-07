@@ -1,16 +1,33 @@
 from typing import Any, Dict, Union
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
+from ..dependencies import get_prediction_service
 from ...domain.exceptions.domain_exceptions import InputRequiredException
 from ...domain.prediction_service import PredictionService
-from ..dependencies import get_prediction_service
 from ...schemas.prediction import PredictionRequest, PredictionResponse
 
 predictions = APIRouter()
 
 responses: Dict[Union[int, str], Dict[str, Any]] = {
     200: {
-        "description": "Successful Response",
-        "model": PredictionResponse,
+        "description": "A successful response will be either a JSON object with the prediction results or a binary file (such as an image or audio file). The content type of the response will indicate the type of the response.",
+        "content": {
+            "application/json": {
+                "example": {
+                    "prediction_model_name": "example_model",
+                    "results": [{"label": "cat", "score": 0.9}],
+                }
+            },
+            "image/png": {
+                "description": "The result is an image. The image will be returned as a binary file."
+            },
+            "image/jpeg": {
+                "description": "The result is an image. The image will be returned as a binary file."
+            },
+            "application/octet-stream": {
+                "description": "The result is a binary file of an unspecified type."
+            }
+        }
     },
     422: {
         "description": "Validation Error",
@@ -37,7 +54,7 @@ responses: Dict[Union[int, str], Dict[str, Any]] = {
 async def make_prediction(
     prediction_request: PredictionRequest,
     prediction_service: PredictionService = Depends(get_prediction_service)
-):
+) -> PredictionResponse | StreamingResponse:
     """
     Make incoming prediction requests to the requested model.
     """

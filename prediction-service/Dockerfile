@@ -5,11 +5,10 @@ WORKDIR /app
 COPY ./requirements.txt /app/requirements.txt
 
 RUN apt-get update \
-    && apt-get install gcc -y \
+    && apt-get install -y gcc libmagic1 libmagic-dev \
     && apt-get clean
 
-RUN pip install -r /app/requirements.txt \
-    && rm -rf /root/.cache/pip
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
 COPY . /app/
 

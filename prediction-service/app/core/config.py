@@ -5,7 +5,6 @@ from pydantic_settings import BaseSettings
 
 class Config(BaseSettings):
     SITE_DOMAIN: str = "myapp.com"
-    APP_VERSION: str = "1"
     TORCHSERVE_HOST: str = os.getenv('TORCHSERVE_HOST', 'localhost:8080')
     RABBITMQ_HOST: str = os.getenv(
         'RABBITMQ_URL', 'amqp://user:password@localhost:5672/')
@@ -21,9 +20,8 @@ class Config(BaseSettings):
     PREDICTION_TIMEOUT: int = int(os.getenv('PREDICTION_TIMEOUT', '60'))
 
 
-
 settings = Config()
 
 app_configs: dict[str, Any] = {"title": "Predictions API"}
-app_configs["openapi_url"] = f"/api/v{settings.APP_VERSION}/predictions/openapi.json"
-app_configs["docs_url"] = f"/api/v{settings.APP_VERSION}/predictions/docs"
+app_configs["openapi_url"] = f"/api/predictions/openapi.json"
+app_configs["docs_url"] = f"/api/predictions/docs"

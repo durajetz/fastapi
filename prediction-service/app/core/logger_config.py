@@ -1,7 +1,7 @@
 import logging
 from loguru import logger
 from .intercept_handler import InterceptHandler
-from app.core.config import settings
+from ..core.config import settings
 
 
 def setup_logging():

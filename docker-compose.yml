@@ -31,8 +31,8 @@ services:
   torchserve:
     image: pytorch/torchserve:latest
     ports:
-      - "8080:8080"  # Inference API
-      - "8081:8081"  # Management API
+      - "8080:8080"
+      - "8081:8081"
     volumes:
       - ./model_store:/home/model-server/model_store
     environment:
@@ -44,6 +44,7 @@ services:
       - "/home/model-server/model_store"
       - "--models"
       - "fastrcnn=fastrcnn.mar"
+      - "nst=nst.mar"
     networks:
       - my_network
 

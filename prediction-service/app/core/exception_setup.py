@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
-from app.core.exception_handlers import (
+from ..core.exception_handlers import (
     entity_not_found_exception_handler,
     input_required_exception_handler,
     server_exception_handler,
     validation_exception_handler,
 )
-from app.domain.exceptions.domain_exceptions import (
+from ..domain.exceptions.domain_exceptions import (
     EntityNotFoundException,
     InputRequiredException,
     ServerException,
