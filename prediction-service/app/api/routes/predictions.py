@@ -1,11 +1,11 @@
 from typing import Any, Dict, Union
 from fastapi import APIRouter, Depends
-from app.domain.exceptions.domain_exceptions import InputRequiredException
-from app.api.dependencies import get_prediction_service
-from app.domain.prediction_service import PredictionService
-from app.schemas.prediction import PredictionRequest, PredictionResponse
+from ...domain.exceptions.domain_exceptions import InputRequiredException
+from ...domain.prediction_service import PredictionService
+from ..dependencies import get_prediction_service
+from ...schemas.prediction import PredictionRequest, PredictionResponse
 
-predictions = APIRouter(prefix="/api/v1/predictions", tags=["Predictions"])
+predictions = APIRouter()
 
 responses: Dict[Union[int, str], Dict[str, Any]] = {
     200: {

@@ -1,14 +1,10 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.cors import CORSMiddleware
-from app.api.exception_handlers import entity_not_found_exception_handler, input_required_exception_handler, server_exception_handler, validation_exception_handler
-from app.domain.exceptions.domain_exceptions import EntityNotFoundException, InputRequiredException, ServerException
-from app.middleware.exception_handling import ExceptionHandlingMiddleware
-from app.middleware.request_logging import log_requests
-from app.core.logger_config import setup_logging
-from app.api.routes.predictions import predictions
-from app.core.config import app_configs, settings
+from .core.exception_setup import setup_exception_handlers
+from .middleware.middleware_setup import setup_middlewares
+from .api.router_setup import router as api_router
+from .core.logger_config import setup_logging
+from .core.config import app_configs
 
 
 @asynccontextmanager
@@ -19,25 +15,13 @@ async def lifespan(app: FastAPI):
 
 def create_application() -> FastAPI:
     application = FastAPI(**app_configs, lifespan=lifespan)
-    application.add_middleware(CORSMiddleware,
-                               allow_origins=settings.CORS_ORIGINS,
-                               allow_origin_regex=settings.CORS_ORIGINS_REGEX,
-                               allow_credentials=True,
-                               allow_methods=["GET", "POST", "PUT",
-                                              "PATCH", "DELETE", "OPTIONS"],
-                               allow_headers=settings.CORS_HEADERS)
-    application.add_middleware(ExceptionHandlingMiddleware)
-    application.add_exception_handler(
-        EntityNotFoundException, entity_not_found_exception_handler)
-    application.add_exception_handler(
-        RequestValidationError, validation_exception_handler)
-    application.add_exception_handler(
-        InputRequiredException, input_required_exception_handler)
-    application.add_exception_handler(
-        ServerException, server_exception_handler)
-    application.include_router(predictions)
+
+    setup_middlewares(application)
+    setup_exception_handlers(application)
+
+    application.include_router(api_router)
+
     return application
 
 
 app = create_application()
-app.middleware("http")(log_requests)
