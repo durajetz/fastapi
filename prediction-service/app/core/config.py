@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings
 class Config(BaseSettings):
     SITE_DOMAIN: str = "myapp.com"
     TORCHSERVE_HOST: str = os.getenv('TORCHSERVE_HOST', 'localhost:8080')
+    REDIS_HOST: str = os.getenv('REDIS_HOST', 'localhost:6379')
     RABBITMQ_HOST: str = os.getenv(
         'RABBITMQ_URL', 'amqp://user:password@localhost:5672/')
     INCOMING_QUEUE: str = 'prediction_requests'

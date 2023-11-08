@@ -7,3 +7,5 @@ pydantic-settings
 loguru
 aiolimiter
 python-magic
+backoff
+redis
