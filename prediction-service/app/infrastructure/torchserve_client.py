@@ -10,12 +10,16 @@ from ..core.config import settings
 
 
 class TorchServeClient:
+    rate_limiter = AsyncLimiter(
+        settings.RATE_LIMITER_MAX_TOKENS, settings.RATE_LIMITER_REFILL_TIME
+    )
+
     def __init__(self, host: str):
         self.host = host
-        self.rate_limiter = AsyncLimiter(
-            settings.RATE_LIMITER_MAX_TOKENS, settings.RATE_LIMITER_REFILL_TIME
-        )
-        self._client = None
+        self._client = httpx.AsyncClient(base_url=self.host, timeout=30.0)
+
+    async def close(self):
+        await self._client.aclose()
 
     @staticmethod
     async def read_image_data(image_path: str) -> bytes:
@@ -38,38 +42,37 @@ class TorchServeClient:
         self, prediction_model: str, image_path: str
     ) -> httpx.Response:
         response = None
-        async with AsyncLimiter(
-            settings.RATE_LIMITER_MAX_TOKENS, settings.RATE_LIMITER_REFILL_TIME
-        ) as rate_limiter, httpx.AsyncClient(
-            base_url=self.host, timeout=60.0
-        ) as client:
-            await rate_limiter.acquire()
+        try:
+            await asyncio.wait_for(self.rate_limiter.acquire(), timeout=1.0)
+        except asyncio.TimeoutError as e:
+            logger.error("Rate limit exceeded. Please try again later.")
+            raise ServerException(detail=str(e))
 
-            logger.info(f"Prediction start for model {prediction_model}.")
-            image_data = await self.read_image_data(image_path)
+        logger.info(f"Prediction start for model {prediction_model}.")
 
-            content = image_data
-            headers = {"Content-Type": "application/octet-stream"}
+        image_data = await self.read_image_data(image_path)
 
-            try:
-                response = await asyncio.wait_for(
-                    client.post(
-                        f"predictions/{prediction_model}",
-                        content=content,
-                        headers=headers,
-                    ),
-                    timeout=settings.PREDICTION_TIMEOUT,
-                )
-                response.raise_for_status()
-            except asyncio.TimeoutError:
-                logger.error("Prediction request timed out.")
-                raise ServerException(
-                    status_code=504,
-                    detail="Prediction request timed out, please try again later.",
-                )
-            except (httpx.HTTPStatusError, httpx.RequestError) as e:
-                logger.error(f"HTTP error occurred while making a prediction: {str(e)}")
-                await self._handle_http_exception(e)
+        async def prediction_task():
+            return await self._client.post(
+                f"predictions/{prediction_model}",
+                content=image_data,
+                headers={"Content-Type": "application/octet-stream"},
+            )
 
-            logger.info(f"Prediction made successfully for model {prediction_model}.")
-            return response
+        try:
+            response = await asyncio.wait_for(
+                prediction_task(), timeout=settings.PREDICTION_TIMEOUT
+            )
+            response.raise_for_status()
+        except asyncio.TimeoutError:
+            logger.error("Prediction request timed out.")
+            raise ServerException(
+                status_code=504,
+                detail="Prediction request timed out, please try again later.",
+            )
+        except (httpx.HTTPStatusError, httpx.RequestError) as e:
+            logger.error(f"HTTP error occurred while making a prediction: {str(e)}")
+            await self._handle_http_exception(e)
+
+        logger.info(f"Prediction made successfully for model {prediction_model}.")
+        return response

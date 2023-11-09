@@ -54,6 +54,7 @@ class PredictionService:
     async def make_prediction(
         self, request: PredictionRequest
     ) -> PredictionResponse | StreamingResponse:
+        logger.info("Starting the call to TorchServe client...")
         response = await self.torchserve_client.make_prediction(
             request.prediction_model_name, request.image_path
         )
