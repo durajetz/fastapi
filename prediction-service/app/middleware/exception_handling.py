@@ -1,7 +1,7 @@
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
-from ..domain.exceptions.domain_exceptions import CustomBaseException
+from app.domain.exceptions.domain_exceptions import CustomBaseException
 
 
 class ExceptionHandlingMiddleware(BaseHTTPMiddleware):
@@ -15,7 +15,6 @@ class ExceptionHandlingMiddleware(BaseHTTPMiddleware):
                 content={"detail": exc.detail, "status_code": exc.status_code},
             )
         except Exception as exc:
-
             return JSONResponse(
                 status_code=500,
                 content={"detail": "Internal Server Error", "status_code": 500},

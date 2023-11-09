@@ -7,6 +7,10 @@ class PredictionRequest(BaseModel):
     image_path: str
 
 
+class PendingPredictionResponse(BaseModel):
+    inference_id: str
+
+
 class PredictionResponse(BaseModel):
     prediction_model_name: str
     results: List[Any] | str

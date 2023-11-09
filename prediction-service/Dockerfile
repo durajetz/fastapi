@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY . /app/
 
 ENV PATH "$PATH:/app/scripts"
+ENV PYTHONPATH /app
 
 RUN useradd -m -d /app -s /bin/bash app \
     && chown -R app:app /app/* && chmod +x /app/scripts/*
