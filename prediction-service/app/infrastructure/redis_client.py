@@ -1,22 +1,47 @@
-# core/redis_client.py
-
+from loguru import logger
 import redis
-from ..core.config import settings
-
 
 class RedisClient:
+    def __init__(self, host: str, port: int):
+        self.host = host
+        self.port = port
+        self.connect()
 
-    def __init__(self, host: str):
-        self.client = redis.Redis(
-            host=host,
-            decode_responses=True
-        )
+    def connect(self):
+        try:
+            self.client = redis.Redis(host=self.host, port=self.port, decode_responses=True)
+            if self.client.ping():
+                logger.info(f"Connected to Redis at {self.host}:{self.port}")
+        except redis.ConnectionError as e:
+            logger.error(f"Failed to connect to Redis at {self.host}:{self.port} - {e}")
 
     def set(self, key: str, value: str):
-        self.client.set(key, value)
+        try:
+            self.client.set(key, value)
+            logger.info(f"Set key: {key} with value: {value} in Redis")
+        except Exception as e:
+            logger.error(f"Error setting key: {key} in Redis - {e}")
 
     def get(self, key: str):
-        return self.client.get(key)
+        try:
+            value = self.client.get(key)
+            if value is not None:
+                logger.info(f"Retrieved key: {key} with value: {value} from Redis")
+            else:
+                logger.warning(f"Key: {key} does not exist in Redis")
+            return value
+        except Exception as e:
+            logger.error(f"Error retrieving key: {key} from Redis - {e}")
+            return None
 
     def exists(self, key: str):
-        return self.client.exists(key)
+        try:
+            exists = self.client.exists(key)
+            if exists:
+                logger.info(f"Key: {key} exists in Redis")
+            else:
+                logger.warning(f"Key: {key} does not exist in Redis")
+            return exists
+        except Exception as e:
+            logger.error(f"Error checking if key: {key} exists in Redis - {e}")
+            return False

@@ -1,77 +1,63 @@
+import asyncio
+from aio_pika import connect, Message, DeliveryMode
 from loguru import logger
-import pika
-from pika.exceptions import AMQPError, ChannelClosedByBroker
 from ..core.config import settings
-from time import sleep
 import backoff
 
 
-class MessageQueue:
+class AsyncMessageQueue:
     def __init__(self):
         self.url = settings.RABBITMQ_HOST
         self.queue_name = settings.INCOMING_QUEUE
-        self.params = pika.URLParameters(self.url)
         self.connection = None
         self.channel = None
 
-    @backoff.on_exception(backoff.expo, AMQPError, max_tries=8)
-    def connect(self):
-        self.connection = pika.BlockingConnection(self.params)
-        self.channel = self.connection.channel()
-        self.channel.queue_declare(queue=self.queue_name, durable=True)
-        self.channel.basic_qos(prefetch_count=1)
-        logger.info("Connected to RabbitMQ and declared the queue.")
+    @backoff.on_exception(backoff.expo, ConnectionRefusedError, max_time=60)
+    async def connect(self):
+        try:
+            self.connection = await connect(self.url)
+            self.channel = await self.connection.channel()
+            queue = await self.channel.declare_queue(self.queue_name, durable=True)
+            await self.channel.set_qos(prefetch_count=1)
+            logger.info("Connected to RabbitMQ and declared the queue.")
+            return queue
+        except ConnectionRefusedError as e:
+            logger.error(f"Connection to RabbitMQ failed. {str(e)}")
 
-    def disconnect(self):
-        if self.connection and not self.connection.is_closed:
-            self.connection.close()
+    async def disconnect(self):
+        if self.connection:
+            await self.connection.close()
             logger.info("Disconnected from RabbitMQ.")
 
-    @backoff.on_exception(backoff.expo, AMQPError, max_tries=8)
-    def publish(self, body, inference_id: str, routing_key=None):
+    async def publish(
+        self, body: str, inference_id: str, routing_key: str | None = None
+    ):
+        logger.info(
+            f"Publishing message with inference_id {inference_id}. Message: {body}"
+        )
         routing_key = routing_key or self.queue_name
-        if not self.connection or self.connection.is_closed:
-            self.connect()
-        if self.channel and self.channel.is_open:
-            self.channel.basic_publish(
-                exchange='',
-                routing_key=routing_key,
-                body=body,
-                properties=pika.BasicProperties(
-                    headers={'inference_id': inference_id},
-                    delivery_mode=2,
+        if not self.channel or not self.connection:
+            await self.connect()
+
+        message = Message(
+            body=body.encode(),
+            headers={"inference_id": inference_id},
+            delivery_mode=DeliveryMode.PERSISTENT,
+        )
+
+        await self.channel.default_exchange.publish(
+            message,
+            routing_key=routing_key,
+        )
+        logger.info(f"Published message to {routing_key}. Message: {body}")
+
+    async def consume(self, callback, queue=None):
+        logger.info("Starting consuming the message...")
+        queue = await self.connect() if not queue else queue
+
+        async for message in queue:
+            async with message.process():
+                logger.info(
+                    f"Consuming message with inference_id {message.headers['inference_id']}. Message: {message.body.decode()}"
                 )
-            )
-            logger.info(f"Published message to {routing_key}. Message: {body}")
-        else:
-            logger.warning("Channel is not open. Message not sent.")
-
-    def consume(self, callback, queue=None):
-        queue = queue or self.queue_name
-        if not self.connection or self.connection.is_closed:
-            self.connect()
-        if self.channel and self.channel.is_open:
-            def wrapped_callback(ch, method, properties, body):
-                try:
-                    callback(ch, method, properties, body)
-                    ch.basic_ack(delivery_tag=method.delivery_tag)
-                except Exception as e:
-                    logger.error(f"Error processing message: {e}")
-                    ch.basic_nack(delivery_tag=method.delivery_tag)
-
-            self.channel.basic_consume(
-                queue=queue,
-                on_message_callback=wrapped_callback,
-                auto_ack=False
-            )
-            try:
-                self.channel.start_consuming()
-            except ChannelClosedByBroker:
-                logger.error(
-                    "Channel was closed by broker, attempting to reconnect.")
-                self.connect()
-                self.consume(callback, queue)
-            except KeyboardInterrupt:
-                logger.info("Consumer was stopped by user.")
-        else:
-            logger.warning("Channel is not open. Cannot consume messages.")
+                await callback(message)

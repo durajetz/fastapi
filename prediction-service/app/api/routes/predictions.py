@@ -4,7 +4,11 @@ from fastapi.responses import StreamingResponse
 from ..dependencies import get_prediction_service
 from ...domain.exceptions.domain_exceptions import InputRequiredException
 from ...domain.prediction_service import PredictionService
-from ...schemas.prediction import PendingPredictionResponse, PredictionRequest, PredictionResponse
+from ...schemas.prediction import (
+    PendingPredictionResponse,
+    PredictionRequest,
+    PredictionResponse,
+)
 
 predictions = APIRouter()
 
@@ -13,9 +17,28 @@ prediction_responses: Dict[Union[int, str], Dict[str, Any]] = {
         "description": "A successful response will be either a JSON object with the prediction results or a binary file (such as an image or audio file). The content type of the response will indicate the type of the response.",
         "content": {
             "application/json": {
-                "example": {
-                    "prediction_model_name": "example_model",
-                    "results": [{"label": "cat", "score": 0.9}],
+                "examples": {
+                    "pendingExample": {
+                        "summary": "Pending Result",
+                        "value": {
+                            "prediction_model_name": "example_model",
+                            "results": "pending",
+                        },
+                    },
+                    "successExample": {
+                        "summary": "Successful Prediction",
+                        "value": {
+                            "prediction_model_name": "example_model",
+                            "results": [{"label": "cat", "score": 0.9}],
+                        },
+                    },
+                    "errorExample": {
+                        "summary": "Error Prediction",
+                        "value": {
+                            "prediction_model_name": "example_model",
+                            "results": "Error while making the prediction.",
+                        },
+                    },
                 }
             },
             "image/png": {
@@ -26,34 +49,66 @@ prediction_responses: Dict[Union[int, str], Dict[str, Any]] = {
             },
             "application/octet-stream": {
                 "description": "The result is a binary file of an unspecified type."
-            }
-        }
+            },
+        },
     },
     422: {
         "description": "Validation Error",
-        "content": {
-            "application/json": {
-                "example": {
-                    "detail": "field '' required"
-                }
-            }
-        }
+        "content": {"application/json": {"example": {"detail": "field '' required"}}},
     },
     500: {
         "description": "Internal Server Error",
         "content": {
             "application/json": {
-                "example": {"detail": "Internal server error occurred while making a prediction."},
+                "example": {
+                    "detail": "Internal server error occurred while making a prediction."
+                },
             }
-        }
+        },
+    },
+}
+
+publish_prediction_responses: Dict[Union[int, str], Dict[str, Any]] = {
+    200: {
+        "description": "A successful response will be either a JSON object with the prediction results or a binary file (such as an image or audio file). The content type of the response will indicate the type of the response.",
+        "content": {
+            "application/json": {
+                "examples": {
+                    "successExample": {
+                        "summary": "Successful Prediction",
+                        "value": {
+                            "inference_id": "example_id",
+                        },
+                    },
+                }
+            }
+        },
+    },
+    422: {
+        "description": "Validation Error",
+        "content": {"application/json": {"example": {"detail": "field '' required"}}},
+    },
+    500: {
+        "description": "Internal Server Error",
+        "content": {
+            "application/json": {
+                "example": {
+                    "detail": "Internal server error occurred while publishing a prediction request."
+                },
+            }
+        },
     },
 }
 
 
-@predictions.post('/publish-prediction', response_model=PendingPredictionResponse)
+@predictions.post(
+    "",
+    response_model=PendingPredictionResponse,
+    responses=publish_prediction_responses,
+)
 async def make_prediction(
     prediction_request: PredictionRequest,
-    prediction_service: PredictionService = Depends(get_prediction_service)
+    prediction_service: PredictionService = Depends(get_prediction_service),
 ) -> PendingPredictionResponse:
     """
     Make incoming prediction requests to the requested model.
@@ -64,15 +119,17 @@ async def make_prediction(
     return PendingPredictionResponse(inference_id=inference_id)
 
 
-@predictions.post('/get-result', response_model=PredictionResponse, responses=prediction_responses)
+@predictions.get(
+    "/{inference_id}", response_model=PredictionResponse, responses=prediction_responses
+)
 async def get_result(
     inference_id: str,
-    prediction_service: PredictionService = Depends(get_prediction_service)
+    prediction_service: PredictionService = Depends(get_prediction_service),
 ) -> PredictionResponse | StreamingResponse:
     """
     Retrieve the result of a prediction task by task_id.
     """
+    if not inference_id:
+        raise InputRequiredException(field_name="inference_id")
     result = prediction_service.get_response_from_inference_id(inference_id)
-    # if result is None:
-    #     return {"detail": "Task not found or not yet completed.", "status": "pending"}
     return result

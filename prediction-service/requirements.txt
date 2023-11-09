@@ -9,3 +9,4 @@ aiolimiter
 python-magic
 backoff
 redis
+aio-pika

@@ -1,14 +1,15 @@
-version: '3.7'
+version: "3.7"
 
 services:
   prediction_service:
-    build: 
+    build:
       context: ./prediction-service
       dockerfile: Dockerfile
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-      - TORCHSERVE_HOST=http://host.docker.internal:8080
-      - REDIS_HOST=http://host.docker.internal:6379
+      - TORCHSERVE_HOST=http://torchserve:8080
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - PREDICTION_TIMEOUT=60
     volumes:
       - ./prediction-service/:/app/
@@ -17,8 +18,9 @@ services:
       - 8002:8000
     depends_on:
       - rabbitmq
+      - redis
     networks:
-      - my_network
+      - prediction_network
 
   rabbitmq:
     image: "rabbitmq:3-management"
@@ -27,14 +29,14 @@ services:
       - "5672:5672"
       - "15672:15672"
     networks:
-      - my_network
+      - prediction_network
 
   redis:
     image: "redis:latest"
     ports:
       - "6379:6379"
     networks:
-      - my_network
+      - prediction_network
 
   torchserve:
     image: pytorch/torchserve:latest
@@ -52,25 +54,29 @@ services:
       - "/home/model-server/model_store"
       - "--models"
       - "fastrcnn=fastrcnn.mar"
-      - "nst=nst.mar"
     networks:
-      - my_network
+      - prediction_network
 
   worker:
-    build: 
+    build:
       context: ./prediction-service
       dockerfile: Dockerfile
+    restart: on-failure
     environment:
       - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672/
-      - REDIS_HOST=http://host.docker.internal:6379
+      - TORCHSERVE_HOST=http://torchserve:8080
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     volumes:
-      - ./prediction-service/:/king/
+      - ./prediction-service/:/app/
+      - ./images/:/images
     depends_on:
       - rabbitmq
       - redis
+      - prediction_service
     networks:
-      - my_network
-    command: python ./app/worker.py
-    
+      - prediction_network
+    command: python -m worker.worker
+
 networks:
-  my_network:
+  prediction_network:
