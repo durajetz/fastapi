@@ -84,7 +84,8 @@ The service interactions follow this schematic flow:
 docker-compose up
 ```
 
-You can access the enhanced prediction controller via: <http://localhost:8002/api/predictions/docs>.
+You can access the enhanced prediction controller via: 
+><http://localhost:8002/api/predictions/docs>
 
 ## Project Structure
 
@@ -117,20 +118,24 @@ You can access the enhanced prediction controller via: <http://localhost:8002/ap
 The tree above represents the directory structure of the project, with each component encapsulated within its respective module, following clean architecture principles.
 
 ## Request examples
-- Predictions request body:
+
+>Predictions request body:
+
   ```json
-  {
-    "prediction_model_name": "fastrcnn",
-    "image_path": "/images/cat.jpg"
-  }
+    {
+        "prediction_model_name": "fastrcnn",
+        "image_path": "/images/cat.jpg"
+    }
   ```
 
 ## Response examples
 
-- Success file response format from TorchServe:
+>Success file response format from TorchServe:
+
 ![File response success](https://i.ibb.co/hWZ1QVM/image.png)
 
-- Success json response format from TorchServe:
+>Success json response format from TorchServe:
+
   ```json
     {
         "prediction_model_name": "example_model",
@@ -143,7 +148,8 @@ The tree above represents the directory structure of the project, with each comp
     }
   ```
 
-- Pending json response format from TorchServe:
+>Pending json response format from TorchServe:
+
   ```json
     {
         "prediction_model_name": "example_model",
@@ -151,7 +157,8 @@ The tree above represents the directory structure of the project, with each comp
     }
   ```
 
-- Pending json response format from TorchServe:
+>Pending json response format from TorchServe:
+
   ```json
     {
         "prediction_model_name": "example_model",
