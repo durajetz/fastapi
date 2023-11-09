@@ -45,7 +45,7 @@ class PredictionService:
             json.dumps(
                 {
                     "prediction_model_name": request.prediction_model_name,
-                    "results": "pending",
+                    "results": "Pending",
                 }
             ),
         )

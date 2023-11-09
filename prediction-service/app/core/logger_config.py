@@ -17,10 +17,10 @@ def setup_logging():
         retention=retention,
         enqueue=True,
         level=level,
-        format=logger_format
+        format=logger_format,
     )
 
-    logging.getLogger('uvicorn').handlers = [InterceptHandler()]
-    logging.getLogger('uvicorn.access').handlers = [InterceptHandler()]
-    logging.getLogger('uvicorn.error').handlers = [InterceptHandler()]
-    logging.getLogger('gunicorn.error').handlers = [InterceptHandler()]
+    logging.getLogger("uvicorn").handlers = [InterceptHandler()]
+    logging.getLogger("uvicorn.access").handlers = [InterceptHandler()]
+    logging.getLogger("uvicorn.error").handlers = [InterceptHandler()]
+    logging.getLogger("gunicorn.error").handlers = [InterceptHandler()]

@@ -19,7 +19,7 @@ class InterceptHandler(logging.Handler):
 
         if frame:
             logger.opt(depth=depth, exception=record.exc_info).log(
-                level, record.getMessage())
+                level, record.getMessage()
+            )
         else:
-            logger.opt(exception=record.exc_info).log(
-                level, record.getMessage())
+            logger.opt(exception=record.exc_info).log(level, record.getMessage())

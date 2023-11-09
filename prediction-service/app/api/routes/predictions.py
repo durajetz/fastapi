@@ -22,7 +22,7 @@ prediction_responses: Dict[Union[int, str], Dict[str, Any]] = {
                         "summary": "Pending Result",
                         "value": {
                             "prediction_model_name": "example_model",
-                            "results": "pending",
+                            "results": "Pending",
                         },
                     },
                     "successExample": {
