@@ -133,29 +133,29 @@ The tree above represents the directory structure of the project, with each comp
 - Success json response format from TorchServe:
   ```json
     {
-    "prediction_model_name": "example_model",
-    "results": [
-        {
-        "label": "cat",
-        "score": 0.9
-        }
-    ]
+        "prediction_model_name": "example_model",
+        "results": [
+            {
+            "label": "cat",
+            "score": 0.9
+            }
+        ]
     }
   ```
 
 - Pending json response format from TorchServe:
   ```json
     {
-    "prediction_model_name": "example_model",
-    "results": "Pending"
+        "prediction_model_name": "example_model",
+        "results": "Pending"
     }
   ```
 
 - Pending json response format from TorchServe:
   ```json
     {
-    "prediction_model_name": "example_model",
-    "results": "Error while making the prediction"
+        "prediction_model_name": "example_model",
+        "results": "Error while making the prediction"
     }
   ```
 
