@@ -1,4 +1,4 @@
-# Prediction Service Microservice
+# Prediction Service
 
 ## Overview
 
